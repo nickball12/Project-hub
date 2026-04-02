@@ -49,10 +49,18 @@ const PRIORITIES = {
   critical: { label: "Critical", color: "#DC2626" },
 };
 
+const HORIZONS = {
+  "this-week":    { label: "This Week",    color: "#DC2626" },
+  "this-month":   { label: "This Month",   color: "#D97706" },
+  "this-quarter": { label: "This Quarter", color: "#4F46E5" },
+  "this-year":    { label: "This Year",    color: "#059669" },
+  "someday":      { label: "Someday",      color: "#6B7280" },
+};
+
 const SEED = [
   {
     id:"p1", title:"Mortgage Transition — Family to Parents", category:"financial",
-    status:"in-progress", priority:"critical",
+    status:"in-progress", priority:"critical", horizon:"this-quarter",
     description:"Transition current co-mortgagors off the shared mortgage and bring parents in under a rental/co-ownership proposition.",
     stakeholders:[
       {name:"Wife",role:"Co-owner / Decision maker"},
@@ -79,7 +87,7 @@ const SEED = [
   },
   {
     id:"p2", title:"Full Property Drainage Overhaul", category:"home",
-    status:"planning", priority:"high",
+    status:"planning", priority:"high", horizon:"this-quarter",
     description:"Fix drainage across the entire property — gutters, grading, downspouts, yard drainage.",
     stakeholders:[
       {name:"Wife",role:"Co-decision maker"},
@@ -102,7 +110,7 @@ const SEED = [
   },
   {
     id:"p3", title:"Personal Dev — Side Project Tracker", category:"dev",
-    status:"in-progress", priority:"medium",
+    status:"in-progress", priority:"medium", horizon:"this-quarter",
     description:"Build and maintain personal dev projects, tools, and experiments.",
     stakeholders:[{name:"Self",role:"Developer / Owner"}],
     documents:[{name:"GitHub Repos",type:"Code"},{name:"Tech Stack Notes",type:"Reference"}],
@@ -116,7 +124,7 @@ const SEED = [
   },
   {
     id:"p4", title:"5-Year Personal Vision & Goals", category:"personal",
-    status:"planning", priority:"high",
+    status:"planning", priority:"high", horizon:"this-year",
     description:"Define and track long-term personal ambitions — financial independence, career direction, lifestyle.",
     stakeholders:[{name:"Self",role:"Primary"},{name:"Wife",role:"Partner / Shared goals"}],
     documents:[{name:"Vision Document",type:"Personal"},{name:"Financial Projection",type:"Financial"}],
@@ -132,7 +140,7 @@ const SEED = [
   },
   {
     id:"p5", title:"House Upgrade Wishlist & Prioritization", category:"wishlist",
-    status:"backlog", priority:"medium",
+    status:"backlog", priority:"medium", horizon:"someday",
     description:"Running list of desired home improvements ranked by ROI, need, and budget.",
     stakeholders:[{name:"Self",role:"Owner"},{name:"Wife",role:"Co-owner"}],
     documents:[{name:"Wishlist Spreadsheet",type:"Planning"},{name:"Home Improvement Budget",type:"Financial"}],
@@ -196,6 +204,7 @@ function Card({ project, onClick }) {
   const cat = CATEGORIES[project.category];
   const st  = STATUSES[project.status];
   const pr  = PRIORITIES[project.priority];
+  const hz  = HORIZONS[project.horizon || "this-quarter"];
   return (
     <div onClick={onClick}
       style={{ background:"#fff", border:"1px solid #E5E7EB", borderLeft:`4px solid ${cat.color}`,
@@ -205,7 +214,10 @@ function Card({ project, onClick }) {
       onMouseLeave={e=>{ e.currentTarget.style.boxShadow="none"; e.currentTarget.style.transform="none"; }}>
       <div style={{ display:"flex", justifyContent:"space-between", gap:8 }}>
         <div style={{ fontWeight:700, fontSize:14, color:"#111827", lineHeight:1.3, flex:1 }}>{project.title}</div>
-        <Badge color={pr.color} bg={`${pr.color}18`}>{pr.label}</Badge>
+        <div style={{ display:"flex", gap:5, alignItems:"flex-start", flexShrink:0 }}>
+          <Badge color={pr.color} bg={`${pr.color}18`}>{pr.label}</Badge>
+          <Badge color={hz.color} bg={`${hz.color}18`}>{hz.label}</Badge>
+        </div>
       </div>
       <div style={{ display:"flex", gap:6, marginTop:7, flexWrap:"wrap" }}>
         <Badge color={cat.color} bg={cat.bg}>{cat.icon} {cat.label}</Badge>
@@ -296,8 +308,8 @@ function Modal({ project, onClose, onSave, onDelete }) {
             <button onClick={onClose} style={{ border:"none", background:"none", fontSize:22, cursor:"pointer", color:"#9CA3AF" }}>×</button>
           </div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:11 }}>
-            {[["category",CATEGORIES],["status",STATUSES],["priority",PRIORITIES]].map(([field,opts])=>(
-              <select key={field} value={e[field]} onChange={ev=>setE(d=>({...d,[field]:ev.target.value}))}
+            {[["category",CATEGORIES],["status",STATUSES],["priority",PRIORITIES],["horizon",HORIZONS]].map(([field,opts])=>(
+              <select key={field} value={e[field]||(field==="horizon"?"this-quarter":"")} onChange={ev=>setE(d=>({...d,[field]:ev.target.value}))}
                 style={{ ...inp, width:"auto", background:"#fff", cursor:"pointer" }}>
                 {Object.entries(opts).map(([k,v])=><option key={k} value={k}>{v.icon||""} {v.label}</option>)}
               </select>
@@ -432,6 +444,7 @@ function Modal({ project, onClose, onSave, onDelete }) {
 
 function NewModal({ onClose, onAdd }) {
   const [f, setF] = useState({ title:"", category:"home", status:"backlog", priority:"medium",
+    horizon:"this-quarter",
     description:"", startDate:"", targetDate:"", notes:"", tasks:[], stakeholders:[], documents:[], tags:[] });
   const inp = { padding:"8px 11px", border:"1px solid #D1D5DB", borderRadius:7, fontSize:13,
     width:"100%", boxSizing:"border-box", outline:"none" };
@@ -447,7 +460,7 @@ function NewModal({ onClose, onAdd }) {
           <textarea placeholder="Description" value={f.description} rows={3}
             onChange={ev=>setF(d=>({...d,description:ev.target.value}))} style={{ ...inp, resize:"vertical" }}/>
           <div style={{ display:"flex", gap:9 }}>
-            {[["category",CATEGORIES],["status",STATUSES],["priority",PRIORITIES]].map(([field,opts])=>(
+            {[["category",CATEGORIES],["status",STATUSES],["priority",PRIORITIES],["horizon",HORIZONS]].map(([field,opts])=>(
               <select key={field} value={f[field]} onChange={ev=>setF(d=>({...d,[field]:ev.target.value}))}
                 style={{ ...inp, background:"#fff", cursor:"pointer" }}>
                 {Object.entries(opts).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
@@ -474,6 +487,97 @@ function NewModal({ onClose, onAdd }) {
   );
 }
 
+/* ── horizon filter bar ── */
+function HorizonFilter({ value, onChange }) {
+  const items = [
+    { key:"all",           label:"All" },
+    { key:"this-week",     label:"This Week" },
+    { key:"this-month",    label:"This Month" },
+    { key:"this-quarter",  label:"This Quarter" },
+    { key:"this-year",     label:"This Year" },
+    { key:"someday",       label:"Someday" },
+  ];
+  return (
+    <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:18 }}>
+      {items.map(item => {
+        const hz = HORIZONS[item.key];
+        const active = value === item.key;
+        const color = hz ? hz.color : "#4F46E5";
+        return (
+          <button key={item.key} onClick={()=>onChange(item.key)}
+            style={{ padding:"5px 13px", borderRadius:99, border:"1px solid",
+              borderColor:active ? color : "#D1D5DB",
+              background:active ? color : "#fff",
+              color:active ? "#fff" : "#374151",
+              cursor:"pointer", fontSize:12, fontWeight:600, fontFamily:"sans-serif",
+              transition:"all .15s" }}>
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── focus view ── */
+function FocusView({ projects, onTaskToggle }) {
+  const urgent = projects.filter(p => p.horizon==="this-week" || p.horizon==="this-month");
+
+  if (!urgent.length) {
+    return (
+      <div style={{ textAlign:"center", padding:"60px 20px", color:"#6B7280" }}>
+        <div style={{ fontSize:40, marginBottom:12 }}>◎</div>
+        <div style={{ fontWeight:700, fontSize:18, color:"#374151", marginBottom:8 }}>Nothing urgent right now.</div>
+        <div style={{ fontSize:14 }}>No projects are marked This Week or This Month.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1 style={{ fontWeight:900, fontSize:23, margin:"0 0 6px", letterSpacing:"-0.5px" }}>Focus</h1>
+      <p style={{ color:"#6B7280", fontSize:14, margin:"0 0 22px" }}>Your next actions — this week &amp; this month only.</p>
+      <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
+        {urgent.map(p => {
+          const cat = CATEGORIES[p.category];
+          const pr  = PRIORITIES[p.priority];
+          const hz  = HORIZONS[p.horizon || "this-quarter"];
+          const nextTask = (p.tasks||[]).find(t=>!t.done);
+          const allDone  = (p.tasks||[]).length > 0 && !(p.tasks||[]).find(t=>!t.done);
+          return (
+            <div key={p.id} style={{ background:"#fff", border:"1px solid #E5E7EB",
+              borderLeft:`4px solid ${cat.color}`, borderRadius:12, padding:"16px 18px",
+              boxShadow:"0 1px 4px rgba(0,0,0,0.05)" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+                <span style={{ fontSize:20 }}>{cat.icon}</span>
+                <div style={{ flex:1, fontWeight:700, fontSize:15, color:"#111827" }}>{p.title}</div>
+                <Badge color={pr.color} bg={`${pr.color}18`}>{pr.label}</Badge>
+                <Badge color={hz.color} bg={`${hz.color}18`}>{hz.label}</Badge>
+              </div>
+              {allDone ? (
+                <div style={{ display:"flex", alignItems:"center", gap:7, color:"#059669",
+                  fontWeight:700, fontSize:13 }}>
+                  <span style={{ fontSize:16 }}>✓</span> All done
+                </div>
+              ) : nextTask ? (
+                <div style={{ display:"flex", alignItems:"center", gap:9,
+                  padding:"9px 12px", background:"#F9FAFB", borderRadius:8 }}>
+                  <input type="checkbox" checked={nextTask.done}
+                    onChange={()=>onTaskToggle(p.id, nextTask.id)}
+                    style={{ width:16, height:16, cursor:"pointer", accentColor:"#4F46E5", flexShrink:0 }}/>
+                  <span style={{ fontSize:13, color:"#111827" }}>{nextTask.title}</span>
+                </div>
+              ) : (
+                <div style={{ fontSize:13, color:"#9CA3AF", fontStyle:"italic" }}>No tasks added.</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── main app ── */
 export default function App() {
   const [projects, setProjects] = useState([]);
@@ -481,6 +585,7 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [showNew, setShowNew]   = useState(false);
   const [filterCat, setFilter]  = useState("all");
+  const [filterHorizon, setFilterHorizon] = useState("all");
   const [sync, setSync]         = useState("loading");
   const timer = useRef(null);
 
@@ -521,8 +626,17 @@ export default function App() {
   const handleSave   = p  => { commit(projects.map(x=>x.id===p.id?p:x)); setSelected(null); };
   const handleDelete = id => { commit(projects.filter(x=>x.id!==id)); setSelected(null); };
   const handleAdd    = p  => commit([...projects, p]);
+  const handleTaskToggle = (projectId, taskId) => {
+    const updated = projects.map(p =>
+      p.id !== projectId ? p :
+      { ...p, tasks: (p.tasks||[]).map(t => t.id===taskId ? {...t, done:!t.done} : t) }
+    );
+    commit(updated);
+  };
 
-  const filtered = filterCat==="all" ? projects : projects.filter(p=>p.category===filterCat);
+  const filtered = projects
+    .filter(p => filterCat==="all"    || p.category===filterCat)
+    .filter(p => filterHorizon==="all" || (p.horizon||"this-quarter")===filterHorizon);
 
   const stats = {
     total:      projects.length,
@@ -541,6 +655,7 @@ export default function App() {
     {id:"kanban",    icon:"⊞", label:"Kanban"},
     {id:"timeline",  icon:"▬", label:"Timeline"},
     {id:"list",      icon:"≡", label:"All Projects"},
+    {id:"focus",     icon:"◎", label:"Focus"},
   ];
 
   if (sync==="loading") return (
@@ -585,7 +700,8 @@ export default function App() {
         {view==="dashboard" && (
           <div>
             <h1 style={{ fontWeight:900, fontSize:25, margin:"0 0 5px", letterSpacing:"-0.5px" }}>Your Command Center</h1>
-            <p style={{ color:"#6B7280", fontSize:14, margin:"0 0 26px" }}>Track everything — home, finances, goals, and code.</p>
+            <p style={{ color:"#6B7280", fontSize:14, margin:"0 0 18px" }}>Track everything — home, finances, goals, and code.</p>
+            <HorizonFilter value={filterHorizon} onChange={setFilterHorizon}/>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))", gap:13, marginBottom:30 }}>
               {[
                 {label:"Total",      value:stats.total,      color:"#4F46E5", bg:"#EDE9FE"},
@@ -600,7 +716,9 @@ export default function App() {
               ))}
             </div>
             {Object.entries(CATEGORIES).map(([key,cat])=>{
-              const ps = projects.filter(p=>p.category===key);
+              const ps = projects
+                .filter(p=>p.category===key)
+                .filter(p=>filterHorizon==="all"||(p.horizon||"this-quarter")===filterHorizon);
               if (!ps.length) return null;
               return (
                 <div key={key} style={{ marginBottom:26 }}>
@@ -659,7 +777,7 @@ export default function App() {
         {/* list */}
         {view==="list" && (
           <div>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18, flexWrap:"wrap", gap:10 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:13, flexWrap:"wrap", gap:10 }}>
               <h1 style={{ fontWeight:900, fontSize:23, margin:0 }}>All Projects</h1>
               <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
                 <button onClick={()=>setFilter("all")}
@@ -680,10 +798,16 @@ export default function App() {
                 ))}
               </div>
             </div>
+            <HorizonFilter value={filterHorizon} onChange={setFilterHorizon}/>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(295px,1fr))", gap:13 }}>
               {filtered.map(p=><Card key={p.id} project={p} onClick={()=>setSelected(p)}/>)}
             </div>
           </div>
+        )}
+
+        {/* focus */}
+        {view==="focus" && (
+          <FocusView projects={projects} onTaskToggle={handleTaskToggle}/>
         )}
       </div>
 
