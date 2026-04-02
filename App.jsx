@@ -57,6 +57,8 @@ const HORIZONS = {
   "someday":      { label: "Someday",      color: "#6B7280" },
 };
 
+const DEFAULT_HORIZON = "this-quarter";
+
 const SEED = [
   {
     id:"p1", title:"Mortgage Transition — Family to Parents", category:"financial",
@@ -204,7 +206,7 @@ function Card({ project, onClick }) {
   const cat = CATEGORIES[project.category];
   const st  = STATUSES[project.status];
   const pr  = PRIORITIES[project.priority];
-  const hz  = HORIZONS[project.horizon || "this-quarter"];
+  const hz  = HORIZONS[project.horizon || DEFAULT_HORIZON];
   return (
     <div onClick={onClick}
       style={{ background:"#fff", border:"1px solid #E5E7EB", borderLeft:`4px solid ${cat.color}`,
@@ -282,7 +284,7 @@ function GanttRow({ project, minDate, totalDays }) {
 
 /* ── modal ── */
 function Modal({ project, onClose, onSave, onDelete }) {
-  const [e, setE] = useState({...project});
+  const [e, setE] = useState({...project, horizon: project.horizon || DEFAULT_HORIZON});
   const [tab, setTab] = useState("overview");
   const [ns, setNs] = useState({name:"",role:""});
   const [nd, setNd] = useState({name:"",type:""});
@@ -309,7 +311,7 @@ function Modal({ project, onClose, onSave, onDelete }) {
           </div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:11 }}>
             {[["category",CATEGORIES],["status",STATUSES],["priority",PRIORITIES],["horizon",HORIZONS]].map(([field,opts])=>(
-              <select key={field} value={e[field]||(field==="horizon"?"this-quarter":"")} onChange={ev=>setE(d=>({...d,[field]:ev.target.value}))}
+              <select key={field} value={e[field]} onChange={ev=>setE(d=>({...d,[field]:ev.target.value}))}
                 style={{ ...inp, width:"auto", background:"#fff", cursor:"pointer" }}>
                 {Object.entries(opts).map(([k,v])=><option key={k} value={k}>{v.icon||""} {v.label}</option>)}
               </select>
@@ -444,7 +446,7 @@ function Modal({ project, onClose, onSave, onDelete }) {
 
 function NewModal({ onClose, onAdd }) {
   const [f, setF] = useState({ title:"", category:"home", status:"backlog", priority:"medium",
-    horizon:"this-quarter",
+    horizon:DEFAULT_HORIZON,
     description:"", startDate:"", targetDate:"", notes:"", tasks:[], stakeholders:[], documents:[], tags:[] });
   const inp = { padding:"8px 11px", border:"1px solid #D1D5DB", borderRadius:7, fontSize:13,
     width:"100%", boxSizing:"border-box", outline:"none" };
@@ -541,7 +543,7 @@ function FocusView({ projects, onTaskToggle }) {
         {urgent.map(p => {
           const cat = CATEGORIES[p.category];
           const pr  = PRIORITIES[p.priority];
-          const hz  = HORIZONS[p.horizon || "this-quarter"];
+          const hz  = HORIZONS[p.horizon || DEFAULT_HORIZON];
           const nextTask = (p.tasks||[]).find(t=>!t.done);
           const allDone  = (p.tasks||[]).length > 0 && !(p.tasks||[]).find(t=>!t.done);
           return (
@@ -636,7 +638,7 @@ export default function App() {
 
   const filtered = projects
     .filter(p => filterCat==="all"    || p.category===filterCat)
-    .filter(p => filterHorizon==="all" || (p.horizon||"this-quarter")===filterHorizon);
+    .filter(p => filterHorizon==="all" || (p.horizon||DEFAULT_HORIZON)===filterHorizon);
 
   const stats = {
     total:      projects.length,
@@ -718,7 +720,7 @@ export default function App() {
             {Object.entries(CATEGORIES).map(([key,cat])=>{
               const ps = projects
                 .filter(p=>p.category===key)
-                .filter(p=>filterHorizon==="all"||(p.horizon||"this-quarter")===filterHorizon);
+                .filter(p=>filterHorizon==="all"||(p.horizon||DEFAULT_HORIZON)===filterHorizon);
               if (!ps.length) return null;
               return (
                 <div key={key} style={{ marginBottom:26 }}>
