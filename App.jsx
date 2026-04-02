@@ -289,6 +289,7 @@ function Modal({ project, onClose, onSave, onDelete }) {
   const [ns, setNs] = useState({name:"",role:""});
   const [nd, setNd] = useState({name:"",type:""});
   const [nt, setNt] = useState("");
+  const [ng, setNg] = useState("");
 
   const inp = { padding:"7px 10px", border:"1px solid #D1D5DB", borderRadius:7, fontSize:13,
     width:"100%", boxSizing:"border-box", outline:"none" };
@@ -356,24 +357,47 @@ function Modal({ project, onClose, onSave, onDelete }) {
 
           {tab==="tasks" && (
             <div>
-              {(e.tasks||[]).map(task=>(
-                <div key={task.id} style={{ display:"flex", alignItems:"center", gap:9,
-                  padding:"8px 0", borderBottom:"1px solid #F3F4F6" }}>
-                  <input type="checkbox" checked={task.done} onChange={()=>setE(d=>({...d,tasks:d.tasks.map(t=>t.id===task.id?{...t,done:!t.done}:t)}))}
-                    style={{ width:16, height:16, cursor:"pointer", accentColor:"#4F46E5" }}/>
-                  <span style={{ flex:1, fontSize:13, color:task.done?"#9CA3AF":"#111827",
-                    textDecoration:task.done?"line-through":"none" }}>{task.title}</span>
-                  <button onClick={()=>setE(d=>({...d,tasks:d.tasks.filter(t=>t.id!==task.id)}))}
-                    style={{ border:"none", background:"none", color:"#D1D5DB", cursor:"pointer", fontSize:17 }}>×</button>
-                </div>
-              ))}
+              {(()=>{
+                const tasks = e.tasks||[];
+                const hasGroups = tasks.some(t=>t.group);
+                const taskRow = (task) => (
+                  <div key={task.id} style={{ display:"flex", alignItems:"center", gap:9,
+                    padding:"8px 0", borderBottom:"1px solid #F3F4F6" }}>
+                    <input type="checkbox" checked={task.done} onChange={()=>setE(d=>({...d,tasks:d.tasks.map(t=>t.id===task.id?{...t,done:!t.done}:t)}))}
+                      style={{ width:16, height:16, cursor:"pointer", accentColor:"#4F46E5" }}/>
+                    <span style={{ flex:1, fontSize:13, color:task.done?"#9CA3AF":"#111827",
+                      textDecoration:task.done?"line-through":"none" }}>{task.title}</span>
+                    <button onClick={()=>setE(d=>({...d,tasks:d.tasks.filter(t=>t.id!==task.id)}))}
+                      style={{ border:"none", background:"none", color:"#D1D5DB", cursor:"pointer", fontSize:17 }}>×</button>
+                  </div>
+                );
+                if (!hasGroups) return tasks.map(taskRow);
+                const groups = [];
+                const seen = new Set();
+                if (tasks.some(t=>!t.group)) { groups.push(""); seen.add(""); }
+                tasks.forEach(t=>{ if(t.group&&!seen.has(t.group)){ seen.add(t.group); groups.push(t.group); } });
+                return groups.map((g,gi)=>(
+                  <div key={g||"__general__"}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:gi===0?0:16, marginBottom:4 }}>
+                      <span style={{ fontSize:11, fontWeight:700, color:"#6B7280", letterSpacing:"0.08em",
+                        textTransform:"uppercase", whiteSpace:"nowrap" }}>{g||"General"}</span>
+                      <div style={{ flex:1, height:1, background:"#E5E7EB" }}/>
+                    </div>
+                    {tasks.filter(t=>(t.group||"")===g).map(taskRow)}
+                  </div>
+                ));
+              })()}
+              {(()=>{ const addTask=()=>{ if(!nt.trim())return; const g=ng.trim(); setE(d=>({...d,tasks:[...(d.tasks||[]),{id:tid(),title:nt.trim(),done:false,...(g?{group:g}:{})}]})); setNt(""); }; return (
               <div style={{ display:"flex", gap:8, marginTop:13 }}>
+                <input placeholder="Group (optional)" value={ng} onChange={ev=>setNg(ev.target.value)}
+                  style={{ ...inp, width:130, flexShrink:0 }}/>
                 <input placeholder="Add a task…" value={nt} onChange={ev=>setNt(ev.target.value)}
-                  onKeyDown={ev=>{ if(ev.key==="Enter"&&nt.trim()){ setE(d=>({...d,tasks:[...(d.tasks||[]),{id:tid(),title:nt.trim(),done:false}]})); setNt(""); }}}
+                  onKeyDown={ev=>{ if(ev.key==="Enter") addTask(); }}
                   style={{ ...inp, flex:1 }}/>
-                <button onClick={()=>{ if(!nt.trim())return; setE(d=>({...d,tasks:[...(d.tasks||[]),{id:tid(),title:nt.trim(),done:false}]})); setNt(""); }}
+                <button onClick={addTask}
                   style={{ padding:"7px 14px", background:"#4F46E5", color:"#fff", border:"none", borderRadius:7, cursor:"pointer", fontWeight:700 }}>Add</button>
               </div>
+              ); })()}
             </div>
           )}
 
